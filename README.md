@@ -1,66 +1,37 @@
-## Foundry
+# ChaseGem: An ERC-1155 Based Gem Find Platform
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+ChaseGem is a decentralized platform for finding, supporting trustable information source called Gems. Built on the Polygon zkEVM blockchain and utilizing the ERC-1155 token standard, ChaseGem allows users to support hidden gem information source.
 
-Foundry consists of:
+## Features
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- Create unique Gems with custom attributes and tags by admin
+- Support Gems by Ether
+- Query and manage Gems through a user-friendly interface
 
-## Documentation
+## Smart Contracts
 
-https://book.getfoundry.sh/
+The platform consists of the following smart contracts:
 
-## Usage
+1. `ChaseGem.sol`: The main contract that manages the creation, join and supporting of Gems.
 
-### Build
+## Installation and Setup
 
-```shell
-$ forge build
+To set up the development environment and deploy the contracts, follow these steps:
+
+1. Install [Foundry](https://book.getfoundry.sh/getting-started/installation)
+2. `forge install` to install the dependencies
+3. `cp .env.example .env` to create the environment file
+4. `anvil` to run local node
+5. `source .env && forge script script/Deploy.s.sol:Deploy --fork-url $RPC_URL --private-key $PRIVATE_KEY --broadcast` to deploy the contracts
+
+## Testing
+
+The repository includes a set of tests to ensure the correct functionality of the smart contracts. To run the tests, execute the following command:
+
+```
+forge test
 ```
 
-### Test
+## License
 
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+ChaseGem is released under the [MIT License](LICENSE).
