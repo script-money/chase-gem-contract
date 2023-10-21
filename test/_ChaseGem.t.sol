@@ -29,7 +29,8 @@ contract ChaseGemTest is PRBTest {
         ChaseGem chaseGemImplementation = new ChaseGem();
         UUPSProxy chaseGemProxy = new UUPSProxy(address(chaseGemImplementation), "");
         chaseGem = ChaseGem(address(chaseGemProxy));
-        chaseGem.initialize("http://localhost:3000/api/gemInfo/");
+        chaseGem.initialize("http://localhost:3000/api/gemInfo/", address(this));
+        require(chaseGem.owner() == address(this), "owner not set");
         vm.deal(user1, 1 ether);
     }
 
@@ -39,6 +40,8 @@ contract ChaseGemTest is PRBTest {
         assertEq(chaseGem.latestTag(), 1);
         assertEq(chaseGem.tagIdToTag(1), "Alpha");
         assertEq(chaseGem.tagIdToTag(2), "");
+        chaseGem.addNewTag("DeFi");
+        assertEq(chaseGem.tagIdToTag(2), "DeFi");
     }
 
     function testAddNewGem() public {
@@ -96,6 +99,22 @@ contract ChaseGemTest is PRBTest {
 
         chaseGem.join{value: 0.0008 ether}(1);
         console2.log("nft 1 url", chaseGem.uri(1));
+
+        uint256[] memory indexes = new uint256[](3);
+        indexes[0] = 1;
+        indexes[1] = 2;
+        indexes[2] = 3;
+
+        uint256[] memory balances = chaseGem.getUserGemBalances(user1, indexes);
+        for (uint256 i = 0; i < balances.length; i++) {
+            console2.log("balance", balances[i]);
+        }
+
+        uint256[] memory gemIds = chaseGem.getGemIdsByTag(1);
+        for (uint256 i = 0; i < gemIds.length; i++) {
+            console2.log("gemId", gemIds[i]);
+        }
+
         vm.stopPrank();
     }
 

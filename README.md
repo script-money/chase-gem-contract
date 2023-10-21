@@ -21,8 +21,12 @@ To set up the development environment and deploy the contracts, follow these ste
 1. Install [Foundry](https://book.getfoundry.sh/getting-started/installation)
 2. `forge install` to install the dependencies
 3. `cp .env.example .env` to create the environment file
-4. `anvil` to run local node
-5. `source .env && forge script script/Deploy.s.sol:Deploy --fork-url $RPC_URL --private-key $PRIVATE_KEY --broadcast` to deploy the contracts
+4. `anvil --chain-id=1337` to run local node
+5. `source .env && forge script script/Deploy.s.sol:Deploy --fork-url $RPC_URL --private-key $PRIVATE_KEY  --via-ir --broadcast` to deploy the contracts
+
+> `source .env && forge script script/AddNewTag.s.sol:AddNewTag --fork-url $RPC_URL --private-key $PRIVATE_KEY  --via-ir --broadcast` to add new tag
+
+> `source .env && forge script script/AddNewGem.s.sol:AddNewGem --fork-url $RPC_URL --private-key $PRIVATE_KEY  --via-ir --broadcast` to add test gem
 
 ## Testing
 

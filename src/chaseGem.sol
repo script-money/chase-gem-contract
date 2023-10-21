@@ -29,6 +29,7 @@ contract ChaseGem is Initializable, ERC1155URIStorageUpgradeable, OwnableUpgrade
     mapping(uint256 => uint256) public idToSupportAmount;
     mapping(uint256 => mapping(address => uint256)) public idToSupporterAmount;
     mapping(uint8 => string) public tagIdToTag;
+    mapping(uint8 => mapping(uint256 => bool)) public tagIdToGemIds;
     mapping(uint256 => mapping(uint8 => bool)) public gemIdToTagIds;
 
     event Join(uint256 indexed gemId, address indexed user, uint256 timestamp);
@@ -40,17 +41,13 @@ contract ChaseGem is Initializable, ERC1155URIStorageUpgradeable, OwnableUpgrade
         _disableInitializers();
     }
 
-    function __ChaseGem__init(string memory baseUri) internal onlyInitializing {
+    function initialize(string memory baseUri, address owner_) public initializer {
         __ERC1155URIStorage_init();
-        __Ownable_init(msg.sender);
+        __Ownable_init(owner_);
         __UUPSUpgradeable_init();
         mintPrice = 0.000777777777777777 ether;
         cutOff = 5;
         _setBaseURI(baseUri);
-    }
-
-    function initialize(string memory baseUri) public initializer {
-        __ChaseGem__init(baseUri);
     }
 
     modifier isValidGemId(uint256 gemId) {
@@ -70,24 +67,15 @@ contract ChaseGem is Initializable, ERC1155URIStorageUpgradeable, OwnableUpgrade
     }
 
     function joinBatch(uint256[] memory gemIds) external payable {
-        uint256 total = 0;
-        uint256[] memory amounts = new uint256[](gemIds.length);
+        if (msg.value < mintPrice * gemIds.length) {
+            revert PaymentNotEnough();
+        }
 
         for (uint256 i = 0; i < gemIds.length; i++) {
             if (_idToGem[gemIds[i]].user == address(0)) {
                 revert InvalidGemId(gemIds[i]);
             }
-            total += mintPrice;
-            amounts[i] = 1;
-        }
-
-        if (msg.value < total) {
-            revert PaymentNotEnough();
-        }
-
-        _mintBatch(msg.sender, gemIds, amounts, abi.encodePacked(bytes32(block.timestamp)));
-
-        for (uint256 i = 0; i < gemIds.length; i++) {
+            _mint(msg.sender, gemIds[i], 1, abi.encodePacked(bytes32(block.timestamp)));
             emit Join(gemIds[i], msg.sender, block.timestamp);
         }
     }
@@ -111,6 +99,29 @@ contract ChaseGem is Initializable, ERC1155URIStorageUpgradeable, OwnableUpgrade
 
     function getGemById(uint256 gemId) public view returns (Gem memory) {
         return _idToGem[gemId];
+    }
+
+    function getUserGemBalances(address user, uint256[] memory tokenIds) public view returns (uint256[] memory) {
+        uint256[] memory balances = new uint256[](tokenIds.length);
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            balances[i] = balanceOf(user, tokenIds[i]);
+        }
+        return balances;
+    }
+
+    function getGemIdsByTag(uint8 tagId) public view returns (uint256[] memory) {
+        uint256[] memory gemIds = new uint256[](gemIdIndex);
+        uint256 count = 0;
+        for (uint256 i = 1; i <= gemIdIndex; i++) {
+            if (gemIdToTagIds[i][tagId]) {
+                gemIds[count] = i;
+                count++;
+            }
+        }
+        assembly {
+            mstore(gemIds, count)
+        }
+        return gemIds;
     }
 
     /* private function */
@@ -146,6 +157,7 @@ contract ChaseGem is Initializable, ERC1155URIStorageUpgradeable, OwnableUpgrade
                 revert("Tag not exists");
             }
             gemIdToTagIds[gemIdIndex][tagIds[i]] = true;
+            tagIdToGemIds[tagIds[i]][gemIdIndex] = true;
         }
         _setURI(gemIdIndex, uintToString(gemIdIndex));
         emit NewGemAdded(gemIdIndex, gem.user);
