@@ -22,6 +22,12 @@ contract ChaseGem is Initializable, ERC1155URIStorageUpgradeable, OwnableUpgrade
         string url;
     }
 
+    struct SupporterInfo {
+        address supporter;
+        uint256 amount;
+        uint256 gemId;
+    }
+
     uint256 public gemIdIndex;
     uint8 public latestTag;
     mapping(address => uint256) public gemAddressToId;
@@ -31,6 +37,8 @@ contract ChaseGem is Initializable, ERC1155URIStorageUpgradeable, OwnableUpgrade
     mapping(uint8 => string) public tagIdToTag;
     mapping(uint8 => mapping(uint256 => bool)) public tagIdToGemIds;
     mapping(uint256 => mapping(uint8 => bool)) public gemIdToTagIds;
+    mapping(uint256 => address[]) public gemIdToSupporters;
+    mapping(uint256 => mapping(address => bool)) private gemIdToSupporterExists;
 
     event Join(uint256 indexed gemId, address indexed user, uint256 timestamp);
     event Support(uint256 indexed gemId, address indexed user, uint256 amount);
@@ -87,8 +95,16 @@ contract ChaseGem is Initializable, ERC1155URIStorageUpgradeable, OwnableUpgrade
         // send 95% to gem user
         (bool success,) = payable(_idToGem[gemId].user).call{value: msg.value * (100 - cutOff) / 100}("");
         require(success, "Support transfer failed");
+
+        // Check if the supporter has not supported this gem before
+        if (!gemIdToSupporterExists[gemId][msg.sender]) {
+            gemIdToSupporters[gemId].push(msg.sender);
+            gemIdToSupporterExists[gemId][msg.sender] = true;
+        }
+
         idToSupportAmount[gemId] += msg.value;
         idToSupporterAmount[gemId][msg.sender] += msg.value;
+
         emit Support(gemId, msg.sender, msg.value);
     }
 
@@ -122,6 +138,19 @@ contract ChaseGem is Initializable, ERC1155URIStorageUpgradeable, OwnableUpgrade
             mstore(gemIds, count)
         }
         return gemIds;
+    }
+
+    function getSupportersByGemId(uint256 gemId) public view returns (SupporterInfo[] memory) {
+        uint256 supporterCount = gemIdToSupporters[gemId].length;
+        SupporterInfo[] memory supportersWithAmounts = new SupporterInfo[](supporterCount);
+
+        for (uint256 i = 0; i < supporterCount; i++) {
+            address supporterAddress = gemIdToSupporters[gemId][i];
+            uint256 supporterAmount = idToSupporterAmount[gemId][supporterAddress];
+            supportersWithAmounts[i] = SupporterInfo(supporterAddress, supporterAmount, gemId);
+        }
+
+        return supportersWithAmounts;
     }
 
     /* private function */
